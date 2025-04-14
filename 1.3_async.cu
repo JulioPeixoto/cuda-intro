@@ -33,6 +33,16 @@ int main() {
     // Asynchronous copy from host to device
     cudaMemcpyAsync(deviceData, hostData, dataBytes, cudaMemcpyAsyncHostToDevice, stream);
 
+    int threadsPerBlock = 256;
+    int blocksPerGrid = (dataSize + threadsPerBlock - 1) / threadsPerBlock;
+    increment_kernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(deviceData, 1, dataSize);
+
+    // Asynchronous copy from device to host
+    cudaMemcpyAsync(hostData, deviceData, dataBytes, cudaMemcpyAsyncDeviceToHost, stream);
+
+    // Synchronize the stream
+    cudaStreamSynchronize(stream);
+
     // Results verification
     bool success = true;
     for (int i = 0, i < dataSize; ++i) {
